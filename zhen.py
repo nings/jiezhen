@@ -4,22 +4,59 @@ import logging
 import requests
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from logging.handlers import TimedRotatingFileHandler
+from typing import Dict, List, Optional
 import okx.Trade_api as TradeAPI
 import okx.Public_api as PublicAPI
 import okx.Market_api as MarketAPI
 import okx.Account_api as AccountAPI
 import pandas as pd
 
+# 常量定义
+DEFAULT_MONITOR_INTERVAL = 60
+DEFAULT_LEVERAGE = 10
+DEFAULT_BATCH_SIZE = 5
+DEFAULT_ATR_PERIOD = 60
+DEFAULT_AMPLITUDE_PERIOD = 60
+DEFAULT_KLINE_LIMIT = 241
+DEFAULT_EMA_PERIOD = 240
+DEFAULT_AMOUNT_USDT = 20
+DEFAULT_VALUE_MULTIPLIER = 2
+DEFAULT_MIN_SELECTED_VALUE = 0.8  # 最小挂单距离百分比
+MAX_RETRIES = 3
+RETRY_DELAY = 2  # 秒
+
 # 读取配置文件
-with open('config.json', 'r') as f:
-    config = json.load(f)
+def load_config(config_path='config.json'):
+    """加载并验证配置文件"""
+    try:
+        with open(config_path, 'r') as f:
+            config = json.load(f)
+
+        # 验证必需字段
+        if 'okx' not in config:
+            raise ValueError("配置文件缺少 'okx' 字段")
+
+        okx_config = config['okx']
+        required_fields = ['apiKey', 'secret', 'password']
+        for field in required_fields:
+            if field not in okx_config or not okx_config[field]:
+                raise ValueError(f"OKX配置缺少必需字段: {field}")
+
+        return config
+    except FileNotFoundError:
+        raise FileNotFoundError(f"配置文件未找到: {config_path}")
+    except json.JSONDecodeError as e:
+        raise ValueError(f"配置文件JSON格式错误: {e}")
+
+# 加载配置
+config = load_config()
 
 # 提取配置
 okx_config = config['okx']
 trading_pairs_config = config.get('tradingPairs', {})
-monitor_interval = config.get('monitor_interval', 60)  # 默认60秒
+monitor_interval = config.get('monitor_interval', DEFAULT_MONITOR_INTERVAL)
 feishu_webhook = config.get('feishu_webhook', '')
-leverage_value = config.get('leverage', 10)
+leverage_value = config.get('leverage', DEFAULT_LEVERAGE)
 
 trade_api = TradeAPI.TradeAPI(okx_config["apiKey"], okx_config["secret"], okx_config["password"], False, '0')
 market_api = MarketAPI.MarketAPI(okx_config["apiKey"], okx_config["secret"], okx_config["password"], False, '0')
@@ -208,9 +245,10 @@ def process_pair(instId, pair_config):
         average_amplitude = calculate_average_amplitude(klines)
         logger.info(f"{instId} ATR: {atr}, 平均振幅: {average_amplitude:.2f}%")
 
-        value_multiplier = pair_config.get('value_multiplier', 2)
+        # 计算挂单距离（使用最小值策略）
+        value_multiplier = pair_config.get('value_multiplier', DEFAULT_VALUE_MULTIPLIER)
         selected_value = min(average_amplitude, price_atr_ratio) * value_multiplier
-        selected_value = max(selected_value, 0.8)
+        selected_value = max(selected_value, DEFAULT_MIN_SELECTED_VALUE)  # 确保最小距离
 
         long_price_factor = 1 - selected_value / 100
         short_price_factor = 1 + selected_value / 100
