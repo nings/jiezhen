@@ -2,13 +2,14 @@
 
 ## 项目概览
 
-本项目包含3个交易策略，从简单到复杂，从低频到中频：
+本项目包含4个交易策略，从简单到复杂，从低频到AI驱动：
 
-| 策略文件 | 类型 | 周期 | 核心指标 | 适用场景 |
+| 策略文件 | 类型 | 周期 | 核心技术 | 适用场景 |
 |---------|------|------|---------|---------|
 | **zhen.py** | 趋势接针（保守） | 60秒 | EMA + ATR (min策略) | 稳定趋势市场 |
 | **zhen_2.py** | 趋势接针（平衡） | 60秒 | EMA + ATR (avg策略) | 通用市场 |
 | **zhen_orderbook.py** | 订单簿分析（激进） | 5-30秒 | OBI + WAP + Depth | 高流动性品种 |
+| **zhen_ml.py** | AI机器学习⭐新增 | 10秒 | LightGBM + 40+特征 | 量化研究/高级用户 |
 
 ---
 
@@ -125,6 +126,99 @@ tail -f log/okx_orderbook.log
 - **OBI < -0.3**：卖盘压力大，生成卖出信号
 - **置信度 ≥ 0.7**：执行交易
 - **置信度 < 0.7**：观望
+
+---
+
+### 4. 高级/量化研究 → 使用 `zhen_ml.py` ⭐新增
+
+**特点**：
+- 🤖 基于LightGBM机器学习模型
+- 📊 融合40+维度特征（订单簿+技术指标+Ticker）
+- 📚 持续学习，自动适应市场
+- 🎯 每24小时自动重训练
+
+**⚠️ 重要提示**：
+- **需要先收集数据**：运行6-12小时收集训练数据
+- **有一定技术门槛**：需理解机器学习基本概念
+- **仅推荐BTC/ETH**：小币种数据噪音大
+
+**使用流程**：
+
+**阶段1：数据收集（6-12小时）**
+
+```python
+# 编辑 zhen_ml.py
+DATA_COLLECTION_MODE = True  # 启用数据收集
+```
+
+```bash
+# 运行数据收集
+python zhen_ml.py
+
+# 检查样本数（需要≥1000）
+wc -l ml_data/BTC_USDT_SWAP_data.csv
+```
+
+**阶段2：模型训练（自动）**
+
+当样本数≥1000时，系统自动训练。查看日志：
+
+```bash
+tail -f log/okx_ml.log
+
+# 输出示例：
+# BTC-USDT-SWAP 模型训练完成 - 准确率: 0.652
+```
+
+**阶段3：实盘交易**
+
+```python
+# 编辑 zhen_ml.py
+DATA_COLLECTION_MODE = False  # 关闭数据收集
+PREDICTION_THRESHOLD = 0.6    # 预测置信度阈值
+```
+
+```bash
+# 启动交易
+python zhen_ml.py
+
+# 实时监控
+tail -f log/okx_ml.log
+
+# 输出示例：
+# BTC-USDT-SWAP ML预测: 上涨, 置信度: 73%
+# BTC-USDT-SWAP 下单成功: buy @ 98765.28
+```
+
+**配置示例**：
+
+```json
+{
+  "monitor_interval": 10,
+  "leverage": 10,
+  "tradingPairs": {
+    "BTC-USDT-SWAP": {
+      "long_amount_usdt": 50,
+      "short_amount_usdt": 50
+    }
+  }
+}
+```
+
+**回测工具**：
+
+```bash
+# 回测模型表现
+python backtest_ml.py \
+  --data ml_data/BTC_USDT_SWAP_data.csv \
+  --model ml_models/BTC_USDT_SWAP_model.pkl \
+  --capital 1000 \
+  --threshold 0.6
+
+# 输出：胜率、收益率、夏普比率等
+```
+
+**详细文档**：查看 `ML_STRATEGY.md`
 
 ---
 
