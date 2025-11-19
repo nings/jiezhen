@@ -471,10 +471,83 @@ DEFAULT_BATCH_SIZE = 10  # 从5改为10
 
 ---
 
+## 专业工具 ⭐新增
+
+### 高级回测引擎
+
+精确模拟真实交易环境，包含滑点、手续费、止损止盈等。
+
+```bash
+# 运行高级回测
+python advanced_backtest.py \
+  --data ml_data/BTC_USDT_SWAP_data.csv \
+  --model ml_models/BTC_USDT_SWAP_model.pkl \
+  --capital 10000 \
+  --stop-loss 0.02 \
+  --take-profit 0.03
+
+# 输出：
+# - 详细回测报告（夏普比率、最大回撤等）
+# - backtest_trades.csv（交易明细）
+# - backtest_equity.csv（权益曲线）
+```
+
+**核心特性**：
+- ✅ 双手续费（Maker/Taker）
+- ✅ 真实滑点模拟
+- ✅ 自动止损止盈
+- ✅ 10+风险指标
+
+### 数据可视化
+
+生成专业的回测图表报告。
+
+```bash
+# 生成可视化报告
+python visualize_backtest.py
+
+# 输出：
+# - backtest_report.png（综合报告）
+# - backtest_analysis.png（详细分析）
+```
+
+**包含图表**：
+- 📊 权益曲线
+- 📉 回撤分析
+- 📈 交易分布
+- 🔥 月度热力图
+- 🥧 退出原因分析
+
+### 测试套件
+
+确保代码质量和稳定性。
+
+```bash
+# 运行所有测试
+pytest tests/ -v
+
+# 生成覆盖率报告
+pytest tests/ --cov=. --cov-report=html
+```
+
+**详细文档**：查看 `ADVANCED_TOOLS.md`
+
+---
+
 ## 技术支持
 
 - **日志分析**：查看对应的 `.log` 文件
 - **飞书通知**：重要错误会自动推送
 - **代码问题**：检查 Python 依赖（`pip install -r requirements.txt`）
+
+## 文档导航
+
+| 文档 | 内容 |
+|------|------|
+| **QUICK_START.md** | 快速开始（本文档） |
+| **ORDERBOOK_STRATEGY.md** | 订单簿策略详解 |
+| **ML_STRATEGY.md** | 机器学习策略完整指南 |
+| **ADVANCED_TOOLS.md** ⭐ | 高级回测和可视化工具 |
+| **OPTIMIZATION_NOTES.md** | 代码优化说明 |
 
 **祝交易顺利！** 🚀
