@@ -6,3 +6,10 @@ scikit-learn>=1.2.0
 matplotlib>=3.6.0
 seaborn>=0.12.0
 pytest>=7.2.0
+
+# 新增依赖 - 高级功能
+streamlit>=1.28.0          # 实时监控面板
+plotly>=5.17.0             # 交互式可视化
+websocket-client>=1.6.0    # WebSocket实时数据流
+scipy>=1.10.0              # 科学计算（优化算法、统计分析）
+tqdm>=4.66.0               # 进度条显示
