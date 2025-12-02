@@ -1,0 +1,217 @@
+# ============================================
+# 交易机器人项目 .gitignore
+# ============================================
+
+# ===== 敏感配置文件 =====
+# 包含 API 密钥的配置文件，绝对不能提交
+config.json
+secrets.json
+.env
+.env.local
+
+# 配置文件备份
+config.json.backup
+config.json.bak
+config_*.json
+*_config.json
+
+# ===== 日志文件 =====
+# 运行日志，包含交易记录和敏感信息
+log/
+logs/
+*.log
+*.log.*
+
+# ===== Python 相关 =====
+# Python 字节码
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# 虚拟环境
+venv/
+env/
+ENV/
+.venv
+.pyenv
+
+# Python 包管理
+*.egg
+*.egg-info/
+dist/
+build/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.manifest
+*.spec
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+
+# ===== 机器学习相关 =====
+# 训练数据和模型文件（可能很大）
+ml_data/
+ml_models/
+*.pkl
+*.h5
+*.model
+*.weights
+*.ckpt
+*.pth
+*.joblib
+
+# 数据文件
+*.csv
+*.xlsx
+*.xls
+*.parquet
+*.feather
+
+# Jupyter Notebook
+.ipynb_checkpoints
+*.ipynb
+
+# ===== 回测和分析结果 =====
+# 回测输出文件
+backtest_*.csv
+backtest_*.png
+backtest_*.html
+backtest_report.*
+equity_curve.*
+trades_history.*
+
+# 分析图表
+*.png
+*.jpg
+*.jpeg
+*.gif
+!docs/*.png
+!images/*.png
+
+# ===== IDE 和编辑器 =====
+# VSCode
+.vscode/
+*.code-workspace
+
+# PyCharm
+.idea/
+*.iml
+*.iws
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# Vim
+*.swp
+*.swo
+*~
+
+# Emacs
+*~
+\#*\#
+.\#*
+
+# ===== 操作系统 =====
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Linux
+*~
+.directory
+.Trash-*
+
+# ===== 临时文件 =====
+# 临时数据和缓存
+tmp/
+temp/
+cache/
+.cache/
+*.tmp
+*.temp
+*.bak
+*.swp
+*.swo
+
+# ===== 数据库 =====
+# SQLite 数据库
+*.db
+*.sqlite
+*.sqlite3
+
+# ===== 其他 =====
+# 压缩文件
+*.zip
+*.tar.gz
+*.rar
+*.7z
+
+# 文档草稿
+draft/
+drafts/
+TODO.txt
+NOTES.txt
+
+# 个人笔记（如果有的话）
+personal_notes/
+my_notes/
+
+# ===== 保留示例文件 =====
+# 如果你想提供配置示例，可以创建这些文件
+# !config.example.json
+# !config.template.json
+# !.env.example
+
+# ===== 特定于本项目 =====
+# OKX API 相关
+okx_credentials.json
+
+# 交易记录
+trades/
+positions/
+orders/
+
+# 性能监控数据
+performance/
+metrics/
+
+# 错误报告
+error_reports/
+crash_logs/

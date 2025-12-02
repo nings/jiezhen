@@ -31,15 +31,26 @@ def load_config(config_path='config.json'):
         with open(config_path, 'r') as f:
             config = json.load(f)
 
+        # 获取运行模式
+        mode = config.get('mode', 'dry_run')
+        if mode not in ('live', 'dry_run'):
+            raise ValueError(f"不支持的运行模式: {mode}，仅支持 'live' 或 'dry_run'")
+
         # 验证必需字段
         if 'okx' not in config:
             raise ValueError("配置文件缺少 'okx' 字段")
 
         okx_config = config['okx']
         required_fields = ['apiKey', 'secret', 'password']
-        for field in required_fields:
-            if field not in okx_config or not okx_config[field]:
-                raise ValueError(f"OKX配置缺少必需字段: {field}")
+        
+        # 只在 live 模式下强制校验 OKX 密钥
+        if mode == 'live':
+            for field in required_fields:
+                if field not in okx_config or not okx_config[field]:
+                    raise ValueError(f"live 模式下 OKX 配置缺少必需字段: {field}")
+            print(f"✓ 配置加载成功 [模式: {mode}]")
+        else:
+            print(f"✓ 配置加载成功 [模式: {mode}，模拟运行，不会真实下单]")
 
         return config
     except FileNotFoundError:
@@ -51,11 +62,15 @@ def load_config(config_path='config.json'):
 config = load_config()
 
 # 提取配置
+mode = config.get('mode', 'dry_run')
+dry_run = config.get('dry_run', mode != 'live')
 okx_config = config['okx']
 trading_pairs_config = config.get('tradingPairs', {})
 monitor_interval = config.get('monitor_interval', DEFAULT_MONITOR_INTERVAL)
 feishu_webhook = config.get('feishu_webhook', '')
 leverage_value = config.get('leverage', DEFAULT_LEVERAGE)
+batch_size = config.get('batch_size', DEFAULT_BATCH_SIZE)
+risk_config = config.get('risk', {})
 
 trade_api = TradeAPI.TradeAPI(okx_config["apiKey"], okx_config["secret"], okx_config["password"], False, '0')
 market_api = MarketAPI.MarketAPI(okx_config["apiKey"], okx_config["secret"], okx_config["password"], False, '0')
@@ -249,6 +264,10 @@ def calculate_average_amplitude(klines, period=DEFAULT_AMPLITUDE_PERIOD):
 
 def cancel_all_orders(instId):
     """取消指定交易对的所有挂单，支持批量操作"""
+    if dry_run:
+        logger.info(f"[DRY_RUN] 跳过取消挂单: {instId}")
+        return
+    
     try:
         open_orders = trade_api.get_order_list(instId=instId, state='live')
 
@@ -291,6 +310,10 @@ def cancel_all_orders(instId):
         logger.error(f"{instId} 取消挂单时发生错误: {e}")
 
 def set_leverage(instId, leverage, mgnMode='isolated', posSide=None):
+    if dry_run:
+        logger.info(f"[DRY_RUN] 跳过设置杠杆: {instId}, {leverage}x, {mgnMode}, {posSide}")
+        return
+    
     try:
         body = {
             "instId": instId,
@@ -311,15 +334,19 @@ def place_order(instId, price, amount_usdt, side):
     if instId not in instrument_info_dict:
         logger.error(f"Instrument {instId} not found in instrument info dictionary")
         return
+    
     tick_size = float(instrument_info_dict[instId]['tickSz'])
     adjusted_price = round_price_to_tick(price, tick_size)
+    pos_side = 'long' if side == 'buy' else 'short'
+    
+    if dry_run:
+        logger.info(f"[DRY_RUN] 模拟下单: {instId} | 方向={pos_side} | 价格={adjusted_price} | 金额={amount_usdt} USDT | 杠杆={leverage_value}x")
+        return
 
     response = public_api.convert_contract_coin(type='1', instId=instId, sz=str(amount_usdt), px=str(adjusted_price), unit='usdt', opType='open')
     if response['code'] == '0':
         sz = response['data'][0]['sz']
         if float(sz) > 0:
-
-            pos_side = 'long' if side == 'buy' else 'short'
             set_leverage(instId, leverage_value, mgnMode='isolated', posSide=pos_side)
             order_result = trade_api.place_order(
                 instId=instId,
@@ -346,6 +373,11 @@ def process_pair(instId, pair_config):
         pair_config: 该交易对的配置参数
     """
     try:
+        # 检查交易对是否启用
+        if not pair_config.get('enabled', True):
+            logger.debug(f"{instId} 已禁用，跳过处理")
+            return
+        
         # 获取当前市场价格
         mark_price = get_mark_price(instId)
 
@@ -427,26 +459,30 @@ def process_pair(instId, pair_config):
 
 def main():
     """主函数，初始化并运行交易策略"""
-    logger.info("=" * 60)
+    logger.info("="*60)
     logger.info("交易机器人启动")
+    logger.info(f"运行模式: {mode.upper()}")
     logger.info(f"监控间隔: {monitor_interval}秒")
     logger.info(f"杠杆倍数: {leverage_value}x")
-    logger.info("=" * 60)
+    logger.info(f"批处理大小: {batch_size}")
+    if dry_run:
+        logger.warning("  DRY_RUN 模式：不会真实下单和撤单")
+    logger.info("="*60)
 
     try:
         # 初始化：获取所有交易工具信息
         fetch_and_store_all_instruments()
 
-        # 获取配置的交易对列表
-        inst_ids = list(trading_pairs_config.keys())
+        # 获取配置的交易对列表（只包含启用的）
+        inst_ids = [instId for instId, config in trading_pairs_config.items() if config.get('enabled', True)]
 
         if not inst_ids:
-            logger.error("配置文件中没有交易对，程序退出")
+            logger.error("配置文件中没有启用的交易对，程序退出")
             return
 
-        logger.info(f"已配置 {len(inst_ids)} 个交易对: {', '.join(inst_ids)}")
+        logger.info(f"已启用 {len(inst_ids)} 个交易对: {', '.join(inst_ids)}")
 
-        batch_size = DEFAULT_BATCH_SIZE  # 每批处理的数量
+        # 从配置中获取批处理大小
 
         # 主循环
         loop_count = 0

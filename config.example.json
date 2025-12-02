@@ -1,0 +1,75 @@
+{
+  "_comment": "这是配置文件模板，请复制为 config.json 并填写真实信息",
+  
+  "mode": "dry_run",
+  "dry_run": true,
+  
+  "binance": {
+    "_comment": "Binance 交易所配置（暂未使用）"
+  },
+  
+  "okx": {
+    "_comment": "OKX 交易所 API 配置",
+    "apiKey": "your-okx-api-key-here",
+    "secret": "your-okx-secret-here",
+    "password": "your-okx-password-here",
+    "leverage": 1.0
+  },
+  
+  "bitget": {
+    "_comment": "Bitget 交易所配置（暂未使用）"
+  },
+  
+  "feishu_webhook": "https://open.feishu.cn/open-apis/bot/v2/hook/your-webhook-id",
+  
+  "monitor_interval": 60,
+  "batch_size": 5,
+  "leverage": 10,
+  
+  "risk": {
+    "_comment": "风控参数（预留，暂未实现）",
+    "max_position_usdt_per_pair": 500,
+    "max_orders_per_day": 100,
+    "max_daily_loss_usdt": 1000
+  },
+  
+  "tradingPairs": {
+    "BTC-USDT-SWAP": {
+      "_comment": "比特币永续合约",
+      "long_amount_usdt": 50,
+      "short_amount_usdt": 50,
+      "value_multiplier": 2,
+      "ema": 240,
+      "enabled": true
+    },
+    "ETH-USDT-SWAP": {
+      "_comment": "以太坊永续合约",
+      "long_amount_usdt": 30,
+      "short_amount_usdt": 30,
+      "value_multiplier": 2,
+      "ema": 240,
+      "enabled": true
+    },
+    "SOL-USDT-SWAP": {
+      "_comment": "Solana 永续合约（示例，可根据需要调整）",
+      "long_amount_usdt": 20,
+      "short_amount_usdt": 20,
+      "value_multiplier": 2.5,
+      "ema": 240,
+      "enabled": false
+    }
+  },
+  
+  "_instructions": {
+    "mode": "运行模式：'live' 实盘 或 'dry_run' 模拟",
+    "dry_run": "是否为模拟运行（建议先用 true 测试）",
+    "monitor_interval": "监控间隔（秒）",
+    "batch_size": "批处理大小（并发处理的交易对数量）",
+    "leverage": "全局杠杆倍数",
+    "long_amount_usdt": "做多金额（USDT）",
+    "short_amount_usdt": "做空金额（USDT）",
+    "value_multiplier": "挂单距离乘数（越大距离越远）",
+    "ema": "EMA 周期（0 表示双向挂单）",
+    "enabled": "是否启用该交易对"
+  }
+}
